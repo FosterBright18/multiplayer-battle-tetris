@@ -1,0 +1,101 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Battle Tetris</title><link rel="stylesheet" href="styles.css"></head><body>
+<header>
+  <h1>Battle Tetris</h1>
+  <nav>
+    <div id="audio"><button id="mute" aria-label="Mute sound">🔊</button><input id="vol" type="range" min="0" max="100" aria-label="Volume"></div>
+    <div id="userbar" hidden>
+      <div id="badge"><b id="bName"></b><span id="bElo"></span><span id="bRec"></span></div>
+      <button id="logout">Log out / switch account</button>
+    </div>
+  </nav>
+</header>
+<main>
+<section id="auth" hidden>
+  <div class="card authbox">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="login" aria-selected="true">Log in</button>
+      <button role="tab" data-tab="register" aria-selected="false">Create account</button>
+      <button role="tab" data-tab="guest" aria-selected="false">Continue as guest</button>
+    </div>
+    <form id="f-login" data-panel="login">
+      <label>Username<input id="lu" autocomplete="username" required></label>
+      <label>Password<input id="lp" type="password" autocomplete="current-password" required></label>
+      <button class="big" type="submit">Log in</button>
+    </form>
+    <form id="f-register" data-panel="register" hidden>
+      <label>Username (3-16 letters or numbers)<input id="ru" autocomplete="username" pattern="\w{3,16}" required></label>
+      <label>Password (4+ characters)<input id="rp" type="password" autocomplete="new-password" minlength="4" required></label>
+      <button class="big alt" type="submit">Create account</button>
+    </form>
+    <div data-panel="guest" hidden>
+      <p>Jump in without an account. Guest matches are unranked and aren’t saved to the leaderboard.</p>
+      <button id="guest" class="big">Play as guest</button>
+    </div>
+    <p id="err" class="err" role="alert"></p>
+  </div>
+</section>
+
+<section id="lobby" hidden>
+  <div class="dash"><div class="main">
+    <div class="mm">
+      <article class="card"><h2>Quick match</h2><p>Find a rival near your rating. The search starts at ±100 Elo and widens every 5 seconds.</p><button id="qm" class="big alt">Find a match</button></article>
+      <article class="card"><h2>Private room</h2><p>Duel a friend with a 4-letter code.</p><button id="mk">Create room</button>
+        <div class="row"><input id="code" maxlength="4" placeholder="CODE" aria-label="Room code"><button id="jn">Join</button></div><div id="roomcode"></div></article>
+      <article class="card"><h2>Bot duel</h2><p>Practice against a server-side opponent that sends garbage and casts power-ups.</p>
+        <div class="seg" role="radiogroup" aria-label="Bot difficulty"><button data-lvl="easy" role="radio">Easy</button><button data-lvl="medium" role="radio">Medium</button><button data-lvl="hard" role="radio">Hard</button></div>
+        <p id="lvlhelp" class="help"></p><button id="bot" class="big">Duel the bot</button></article>
+    </div>
+    <p id="status" role="status"></p>
+    <article class="card"><h2>How to play</h2>
+      <ul class="keys">
+        <li><span><kbd>←</kbd><kbd>→</kbd></span>Move</li>
+        <li><span><kbd>↑</kbd><kbd>X</kbd></span>Rotate clockwise</li>
+        <li><span><kbd>Z</kbd></span>Rotate counter-clockwise</li>
+        <li><span><kbd>↓</kbd></span>Soft drop</li>
+        <li><span><kbd>Space</kbd></span>Hard drop</li>
+        <li><span><kbd>C</kbd><kbd>Shift</kbd></span>Hold piece</li>
+        <li><span><kbd>1</kbd><kbd>Q</kbd></span>Use power-up slot 1</li>
+        <li><span><kbd>2</kbd><kbd>E</kbd></span>Use power-up slot 2</li>
+      </ul>
+      <p class="help">Clear lines to send garbage. Every 6th piece contains a glowing ★ block. Clear its line to earn a random power-up (you can hold 2).</p>
+    </article>
+    <article class="card"><h2>Power-up guide</h2><div id="pgrid" class="pgrid"></div></article>
+    <article class="card"><h2>Network demo</h2>
+      <label class="lat">Simulated latency <input id="lat" type="range" min="0" max="250" value="0"> <output id="latv">0ms</output></label></article>
+  </div>
+  <aside class="card"><h2>Top 20 by Elo</h2><ol id="lb"></ol></aside></div>
+</section>
+
+<section id="game" hidden>
+  <div id="stage">
+    <div class="side"><span>Hold</span><canvas id="hold"></canvas><span>Next</span><canvas id="n0"></canvas><canvas id="n1"></canvas><canvas id="n2"></canvas>
+      <div class="slots">
+        <button id="s0" class="slot"><i>[1] / Q</i><span></span></button>
+        <button id="s1" class="slot"><i>[2] / E</i><span></span></button>
+      </div><b id="shield" hidden>🛡 Shield up</b></div>
+    <div class="bw"><div id="pendw"><span id="pendn"></span><div id="pend"></div></div><canvas id="me"></canvas><div id="fx"></div><div id="toast" role="status"></div></div>
+    <div class="side wide"><span id="oppname"></span><canvas id="opp"></canvas><ul id="feed"></ul></div>
+  </div>
+  <div id="hud"></div>
+</section>
+</main>
+
+<div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="card mbox">
+    <h2 id="mTitle"></h2><p id="mReason"></p>
+    <table>
+      <thead><tr><th></th><th>You</th><th id="mOpp"></th></tr></thead>
+      <tbody>
+        <tr><th>Lines cleared</th><td id="mL0"></td><td id="mL1"></td></tr>
+        <tr><th>Garbage sent</th><td id="mG0"></td><td id="mG1"></td></tr>
+        <tr><th>Power-ups used</th><td id="mP0"></td><td id="mP1"></td></tr>
+        <tr><th>Elo rating</th><td id="mE0"></td><td id="mE1"></td></tr>
+        <tr><th>Match duration</th><td id="mDur" colspan="2"></td></tr>
+      </tbody>
+    </table>
+    <p id="mNote" role="status"></p>
+    <div class="row"><button id="rematch" class="big alt">Play again / Rematch</button><button id="home" class="big">Return to home lobby</button></div>
+  </div>
+</div>
+<script type="module" src="js/main.js"></script></body></html>
